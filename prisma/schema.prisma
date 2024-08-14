@@ -20,10 +20,10 @@ model Groups {
   isPublic     Boolean
   likeCount    Int
   postCount    Int
+  badges       String[]
   createdAt    DateTime @default(now())
   introduction String
   password     String
-  badges       Badges[] // 그룹 - 배지 다대다 관계
   Posts        Posts[]
 }
 
@@ -36,6 +36,7 @@ model Posts {
   imageURL     String
   location     String
   moment       DateTime
+  tags         String[]
   isPublic     Boolean
   likeCount    Int
   commentCount Int
@@ -43,7 +44,6 @@ model Posts {
   group        Groups     @relation(fields: [groupId], references: [id]) // 게시글 - 사용자 다대일 관계
   groupId      String
   Comments     Comments[]
-  Tags         Tags[] // 게시글 - 태그 다대다 관계
 }
 
 model Comments {
@@ -53,16 +53,4 @@ model Comments {
   createdAt DateTime @default(now())
   post      Posts    @relation(fields: [postId], references: [id]) // 댓글 - 게시글 다대일 관계
   postId    String
-}
-
-model Badges {
-  id        String   @id @default(uuid())
-  badgeName String
-  groups    Groups[] // 배지 - 그룹 다대다 관계
-}
-
-model Tags {
-  id      String  @id @default(uuid())
-  tagName String
-  posts   Posts[] // 태그 - 게시글 다대다 관계
 }
