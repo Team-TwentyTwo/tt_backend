@@ -12,3 +12,57 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Groups {
+  id           String   @id @default(uuid())
+  name         String
+  imageURL     String
+  isPublic     Boolean
+  likeCount    Int
+  postCount    Int
+  createdAt    DateTime @default(now())
+  introduction String
+  password     String
+  badges       Badges[] // 그룹 - 배지 다대다 관계
+  Posts        Posts[]
+}
+
+model Posts {
+  id           String     @id @default(uuid())
+  nickname     String
+  title        String
+  content      String
+  postPassword String
+  imageURL     String
+  location     String
+  moment       DateTime
+  isPublic     Boolean
+  likeCount    Int
+  commentCount Int
+  createdAt    DateTime   @default(now())
+  group        Groups     @relation(fields: [groupId], references: [id]) // 게시글 - 사용자 다대일 관계
+  groupId      String
+  Comments     Comments[]
+  Tags         Tags[] // 게시글 - 태그 다대다 관계
+}
+
+model Comments {
+  id        String   @id @default(uuid())
+  nickname  String
+  content   String
+  createdAt DateTime @default(now())
+  post      Posts    @relation(fields: [postId], references: [id]) // 댓글 - 게시글 다대일 관계
+  postId    String
+}
+
+model Badges {
+  id     String   @id @default(uuid())
+  name   String
+  groups Groups[] // 배지 - 그룹 다대다 관계
+}
+
+model Tags {
+  id    String  @id @default(uuid())
+  name  String
+  posts Posts[] // 태그 - 게시글 다대다 관계
+}
