@@ -6,6 +6,4 @@ const app = express();
 app.use(express.json());
 
 
-console.log('테스트');
-
 app.listen(process.env.PORT || 3000, () => console.log('Server Started'));
