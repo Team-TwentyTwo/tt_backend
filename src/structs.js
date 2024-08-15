@@ -1,5 +1,4 @@
 import * as s from 'superstruct';
-import isEmail from 'is-email';
 
 export const CreatedGroup = s.object({
   name: s.string(),
@@ -9,7 +8,7 @@ export const CreatedGroup = s.object({
   introduction: s.string()
 })
 
-export const PatchGroup = s.partial(CreatedUser);
+export const PatchGroup = s.partial(CreatedGroup);
 
 export const CreatedPost = s.object({
   nickname: s.string(),
@@ -20,11 +19,11 @@ export const CreatedPost = s.object({
   imageURL: s.string(),
   tags: s.array(s.string()),
   location: s.string(),
-  moment: s.date(),
+  moment: s.string(),
   isPublic: s.boolean()
 })
 
-export const PatchPost = s.partial(CreatedUser);
+export const PatchPost = s.partial(CreatedPost);
 
 export const CreatedComment = s.object({
   nickname: s.string(),
@@ -32,4 +31,4 @@ export const CreatedComment = s.object({
   password: s.string()
 })
 
-export const PatchComment = s.partial(CreatedUser);
+export const PatchComment = s.partial(CreatedComment);
