@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Posts" ALTER COLUMN "likeCount" SET DEFAULT 0,
+ALTER COLUMN "commentCount" SET DEFAULT 0;
