@@ -1,5 +1,5 @@
 import express from 'express';
-import { createGroup, getGroupList, editGroup, deleteGroup, getGroupDetail, createPost } from '../controllers/groupController.js';
+import { createGroup, getGroupList, editGroup, deleteGroup, getGroupDetail, createPost, getPostList } from '../controllers/groupController.js';
 
 const router = express.Router();
 
@@ -11,7 +11,9 @@ router.delete('/:groupId', getGroupDetail); // 그룹 상세 정보 조회
 
 
 
-// 게시글 등록. 원래 URI는 /api/groups/:groupId/posts 가 됨. 여기로 요청이 들어오면 createPost 함수가 호출됨.
-router.post('/:groupId/posts', createPost);
+
+router.post('/:groupId/posts', createPost); // 게시글 등록
+router.get('/:groupId/posts', getPostList);// 게시글 목록 조회
+
 
 export default router;

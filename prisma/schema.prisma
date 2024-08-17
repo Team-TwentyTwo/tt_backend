@@ -35,11 +35,11 @@ model Posts {
   postPassword String
   imageURL     String
   location     String
-  moment       DateTime
+  moment       String
   tags         String[]
   isPublic     Boolean
-  likeCount    Int
-  commentCount Int
+  likeCount    Int        @default(0)
+  commentCount Int        @default(0)
   createdAt    DateTime   @default(now())
   group        Groups     @relation(fields: [groupId], references: [id]) // 게시글 - 사용자 다대일 관계
   groupId      String

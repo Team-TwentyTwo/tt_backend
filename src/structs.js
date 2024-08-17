@@ -1,5 +1,8 @@
 import * as s from 'superstruct';
 
+// Custom Refinements : 해시태그가 '#'으로 시작하는지 확인
+const Hashtag = s.refine(s.string(), 'Hashtag', (value) => value.startsWith('#'));
+
 export const CreatedGroup = s.object({
   name: s.string(),
   password: s.string(),
@@ -17,7 +20,7 @@ export const CreatedPost = s.object({
   postPassword: s.string(),
   groupPassword: s.string(),
   imageURL: s.string(),
-  tags: s.array(s.string()),
+  tags: s.array(Hashtag),
   location: s.string(),
   moment: s.string(),
   isPublic: s.boolean()

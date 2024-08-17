@@ -59,7 +59,7 @@ export const getGroupDetail = asyncHandler(async (req, res) => {
 
 
 
-// 게시글 등록 (게시글 등록이 /api/groups 로 시작해서 groupController에 정의함)
+/* -------------------- 게시글 등록 -------------------- */
 export const createPost = asyncHandler(async (req, res) => {
   const { groupId } = req.params;
 
@@ -101,7 +101,7 @@ export const createPost = asyncHandler(async (req, res) => {
       postPassword,
       imageURL,
       location,
-      moment: new Date(moment),
+      moment,
       tags,
       isPublic,
       groupId,
@@ -116,3 +116,115 @@ export const createPost = asyncHandler(async (req, res) => {
 
   res.status(201).json(newPost);
 });
+
+
+
+/* -------------------- 게시글 목록 조회 -------------------- */
+export const getPostList = asyncHandler(async(req, res) => {
+  const { groupId } = req.params;
+  // 쿼리 기본값 설정
+  const {
+    page = 1,
+    pageSize = 10,
+    sortBy = 'latest',
+    keyword = '',
+    isPublic = 'true'
+  } = req.query;
+
+  const group = await prisma.groups.findUniqueOrThrow({
+    where: { id: groupId },
+  });
+
+  // 필요한 타입으로 변경
+  const pageNum = parseInt(page);
+  const pageSizeNum = parseInt(pageSize);
+  const isPublicBool = isPublic === 'true' ? true : false;
+
+  let filters = {
+    groupId: group.id,
+    isPublic: isPublicBool
+  };
+
+  // 키워드를 텍스트, 해시태그(#으로 시작)로 분리
+  const keywordParts = keyword.split(' ');
+
+  const textKeywords = [];
+  const tagKeywords = [];
+
+  keywordParts.forEach(part => {
+    if (part.startsWith('#')) {
+      tagKeywords.push(part);
+    } else {
+      textKeywords.push(part);
+    }
+  });
+
+  // 텍스트는 title에 포함되어 있는지 체크
+  if (textKeywords.length > 0) {
+    filters = {
+      ...filters,
+      title: {
+        contains: textKeywords.join(' '),
+      }
+    };
+  }
+
+  // 해시태그는 tags에 포함되어 있는지 체크
+  if (tagKeywords.length > 0) {
+    filters = {
+      ...filters,
+      AND: tagKeywords.map(tag => ({
+        tags: {
+          has: tag
+        }
+      }))
+    }
+  };
+
+  // 정렬 방식 정의
+  let orderBy;
+  switch (sortBy) {
+    case 'mostCommented':
+      orderBy = { commentCount: 'desc' };
+      break;
+    case 'mostLiked':
+      orderBy = { likeCount: 'desc' };
+      break;
+    case 'latest':
+    default:
+      orderBy = { createdAt: 'desc' };
+  }
+
+  const totalItemCount = await prisma.posts.count({ where: filters });
+
+  const posts = await prisma.posts.findMany({
+    where: filters,
+    orderBy,
+    skip: (pageNum - 1) * pageSizeNum,
+    take: pageSizeNum,
+    select: {
+      id: true,
+      nickname: true,
+      title: true,
+      imageURL: true,
+      tags: true,
+      location: true,
+      moment: true,
+      isPublic: true,
+      likeCount: true,
+      commentCount: true,
+      createdAt: true
+    }
+  });
+
+  const totalPages = Math.ceil(totalItemCount / pageSize);
+
+  res.status(200).json({
+    currentPage: pageNum,
+    totalPages,
+    totalItemCount,
+    data: posts,
+  });
+
+});
+
