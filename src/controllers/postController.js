@@ -58,3 +58,80 @@ export const deletePost = asyncHandler(async (req, res) => {
 
     res.status(200).json({ message: '게시글 삭제 성공' });
 });
+
+
+/* -------------------- 게시글 상세 정보 조회 -------------------- */
+export const getPostDetail = asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+
+    const post = await prisma.posts.findUniqueOrThrow({
+        where: { id: postId },
+        select: {
+            id: true,
+            groupId: true,
+            nickname: true,
+            title: true,
+            content: true,
+            imageURL: true,
+            tags: true,
+            location: true,
+            moment: true,
+            isPublic: true,
+            likeCount: true,
+            commentCount: true,
+            createdAt: true
+        }
+    });
+
+    res.status(200).json(post);
+
+});
+
+
+/* -------------------- 게시글 조회 권한 확인 -------------------- */
+export const verifyPostAccess = asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+    const { postPassword } = req.body;
+
+    // postId로 post 찾기
+    const post = await prisma.posts.findUniqueOrThrow({
+        where: { id: postId }
+    })
+
+    // 비밀번호 일치하지 않으면 ForbiddenError 발생
+    if (post.postPassword !== postPassword) {
+        throw { name: 'ForbiddenError' };
+    }
+
+    res.status(200).json({ message: '비밀번호가 확인되었습니다.' });
+});
+
+
+/* -------------------- 게시글 공감하기 -------------------- */
+export const likePost = asyncHandler(async (req, res) => {
+    const { postId } = req.params; 
+
+    // post의 likeCount 증가
+    await prisma.posts.update({
+        where: { id: postId },
+        data: { likeCount: { increment: 1 } },
+    });
+
+    res.status(200).json({ message: '게시글 공감하기 성공' });
+})
+
+
+/* -------------------- 게시글 공개 여부 확인 -------------------- */
+export const isPostPublic = asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+
+    const post = await prisma.posts.findUniqueOrThrow({
+        where: { id: postId },
+        select: {
+            id: true,
+            isPublic: true
+        }
+    });
+
+    res.status(200).json(post);
+})
