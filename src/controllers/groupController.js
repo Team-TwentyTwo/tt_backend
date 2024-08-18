@@ -1,62 +1,219 @@
 import prisma from "../../prisma/client.js";
 import { asyncHandler } from '../middlewares/asyncHandler.js';
 import { assert } from 'superstruct';
-import { CreatedPost, PatchGroup } from '../structs.js';
+import {
+  CreatedGroup, PatchGroup,
+  CreatedPost
+} from '../structs.js';
 
-// 너가 짰던 groups_router.js에 있던 코드들 그대로 옮겨놓은거야!!
-// 그룹 등록
+/* -------------------- 그룹 등록 -------------------- */
 export const createGroup = asyncHandler(async (req, res) => {
-    const group = await prisma.groups.create({
-        data: req.body,
-    })
+  // 유효성 검사 수행
+  assert(req.body, CreatedGroup)
 
-    res.status(201).send(group);
-})
+  const {
+    name,
+    password,
+    imageURL,
+    isPublic,
+    introduction
+  } = req.body;
 
-// 그룹 목록 조회
+  const newGroup = await prisma.groups.create({
+    data: {
+      name,
+      password,
+      imageURL,
+      isPublic,
+      introduction,
+    },
+  })
+
+  res.status(201).json(newGroup);
+});
+
+/* -------------------- 그룹 목록 조회 -------------------- */
 export const getGroupList = asyncHandler(async (req, res) => {
-    const groups = await prisma.groups.findMany();
+  // 쿼리 기본값 설정
+  const {
+    page = 1,
+    pageSize = 10,
+    sortBy = 'latest',
+    keyword = '',
+    isPublic = 'true'
+  } = req.query;
 
-    res.send(groups);
-})
+  // 필요한 타입으로 변경
+  const pageNum = parseInt(page);
+  const pageSizeNum = parseInt(pageSize);
+  const isPublicBool = isPublic === 'true' ? true : false;
 
-// 그룹 수정
+  let filters = {
+    isPublic: isPublicBool
+  }
+
+  let orderBy;
+  switch (sortBy) {
+    case 'mostPosted':
+      orderBy = { postCount: 'desc' };
+      break;
+    case 'mostLiked':
+      orderBy = { likeCount: 'desc' };
+      break;
+    case 'mostBadge':
+      // 기존 스키마에 bagesCount는 없고 bages만 있었음. 해당 코드를 위해 bagesCount를 추가하게 됨.
+      orderBy = { badgesCount: 'desc' };
+      break;
+    case 'latest':
+    default:
+      orderBy = { createdAt: 'desc' };
+  }
+
+  const totalItemCount = await prisma.groups.count({
+    where: filters
+  })
+
+  const groups = await prisma.groups.findMany({
+    where: filters,
+    orderBy,
+    skip: (pageNum - 1) * pageSizeNum,
+    take: pageSizeNum,
+    select: {
+      id: true,
+      name: true,
+      imageURL: true,
+      isPublic: true,
+      likeCount: true,
+      badgesCount: true,
+      postCount: true,
+      createdAt: true,
+      introduction: true
+    },
+  })
+
+  const totalPages = Math.ceil(totalItemCount / pageSize);
+
+  res.status(200).json({
+    currentPage: pageNum,
+    totalPages,
+    totalItemCount,
+    data: groups,
+  });
+});
+
+/* -------------------- 그룹 수정 -------------------- */
 export const editGroup = asyncHandler(async (req, res) => {
-    assert(req.body, PatchGroup);
+  const { groupId } = req.params;
 
-    const { groupId } = req.params;
-    const group = await prisma.groups.update({
-        where: { groupId },
-        data: req.body,
-    })
+  // 유효성 검사 수행
+  assert(req.body, PatchGroup);
 
-    res.send(group);
-})
+  // 그룹 비밀번호를 제외한 나머지 정보를 updateData에 저장
+  const { password, ...updateData } = req.body;
 
-// 그룹 삭제
+  const group = await prisma.groups.findUniqueOrThrow({
+    where: { groupId },
+  })
+
+  if (group.password !== password) {
+    throw { name: 'ForbiddenError' };
+  }
+
+  // 바뀐 데이터만 업데이트
+  const newGroup = await prisma.groups.update({
+    where: { id: groupId },
+    data: updateData
+  });
+
+  res.status(200).json(newGroup);
+});
+
+/* -------------------- 그룹 삭제 -------------------- */
 export const deleteGroup = asyncHandler(async (req, res) => {
-    const { groupId } = req.params;
-    await prisma.group.delete({
-        where: { groupId },
-    })
+  const { groupId } = req.params;
+  const { password } = req.body;
 
-    res.sendStatus(204);
-})
+  const group = await prisma.groups.findUniqueOrThrow({
+    where: { id: groupId }
+  });
 
-// 그룹 상세 정보 조회
+  if (group.password !== password) {
+    throw { name: 'ForbiddenError' };
+  }
+
+  //게시글 삭제
+  await prisma.groups.delete({
+    where: { groupId },
+  })
+
+  res.status(200).json({ message: '그룹 삭제 성공' });
+});
+
+/* -------------------- 그룹 상세 정보 확인 -------------------- */
 export const getGroupDetail = asyncHandler(async (req, res) => {
-    const { groupId } = req.params;
-    const group = await prisma.groups.findUniqueOrThrow({
-        where: { groupId },
-    })
+  const { groupId } = req.params;
 
-    res.send(group);
-})
+  const group = await prisma.groups.findUniqueOrThrow({
+    where: { id: groupId },
+    select: {
+      id: true,
+      name: true,
+      imageURL: true,
+      isPublic: true,
+      likeCount: true,
+      bages: true,
+      postCount: true,
+      createdAt: true,
+      introduction: true
 
-// 여기다가 계속 짜면 됨!!
+    }
+  })
 
+  res.status(200).json(group);
+});
 
+/* -------------------- 그룹 조회 권한 확인 -------------------- */
+export const verifyGroupAccess = asyncHandler(async (req, res) => {
+  const { groupId } = req.params;
+  const { password } = req.body;
 
+  const group = await prisma.groups.findUniqueOrThrow({
+    where: { id: groupId }
+  })
+
+  if (group.password !== password) {
+    throw { name: 'ForbiddenError' };
+  }
+
+  res.status(200).json({ message: '비밀번호가 확인되었습니다.' });
+});
+
+/* -------------------- 그룹 공감하기 -------------------- */
+export const likeGroup = asyncHandler(async (req, res) => {
+  const { groupId } = req.params;
+
+  await prisma.groups.update({
+    where: { id: groupId },
+    data: { likeCount: { increment: 1 } },
+  });
+
+  res.status(200).json({ message: '그룹 공감하기 성공' });
+});
+
+/* -------------------- 그룹 공개 여부 확인 -------------------- */
+export const isGroupPublic = asyncHandler(async (req, res) => {
+  const { groupId } = req.params;
+
+  const group = await prisma.groups.findUniqueOrThrow({
+    where: { id: groupId },
+    select: {
+      id: true,
+      isPublic: true
+    }
+  });
+
+  res.status(200).json(group);
+});
 
 
 /* -------------------- 게시글 등록 -------------------- */
@@ -120,7 +277,7 @@ export const createPost = asyncHandler(async (req, res) => {
 
 
 /* -------------------- 게시글 목록 조회 -------------------- */
-export const getPostList = asyncHandler(async(req, res) => {
+export const getPostList = asyncHandler(async (req, res) => {
   const { groupId } = req.params;
   // 쿼리 기본값 설정
   const {
