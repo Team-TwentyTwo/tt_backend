@@ -86,3 +86,22 @@ export const getPostDetail = asyncHandler(async (req, res) => {
     res.status(200).json(post);
 
 });
+
+
+/* -------------------- 게시글 조회 권한 확인 -------------------- */
+export const verifyPostAccess = asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+    const { postPassword } = req.body;
+
+    // postId로 post 찾기
+    const post = await prisma.posts.findUniqueOrThrow({
+        where: { id: postId }
+    })
+
+    // 비밀번호 일치하지 않으면 ForbiddenError 발생
+    if (post.postPassword !== postPassword) {
+        throw { name: 'ForbiddenError' };
+    }
+
+    res.status(200).json({ message: '비밀번호가 확인되었습니다.' });
+});
