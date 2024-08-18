@@ -105,3 +105,16 @@ export const verifyPostAccess = asyncHandler(async (req, res) => {
 
     res.status(200).json({ message: '비밀번호가 확인되었습니다.' });
 });
+
+/* -------------------- 게시글 공감하기 -------------------- */
+export const likePost = asyncHandler(async (req, res) => {
+    const { postId } = req.params; 
+
+    // post의 likeCount 증가
+    await prisma.posts.update({
+        where: { id: postId },
+        data: { likeCount: { increment: 1 } },
+    });
+
+    res.status(200).json({ message: '게시글 공감하기 성공' });
+})
