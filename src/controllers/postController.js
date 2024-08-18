@@ -58,3 +58,31 @@ export const deletePost = asyncHandler(async (req, res) => {
 
     res.status(200).json({ message: '게시글 삭제 성공' });
 });
+
+
+/* -------------------- 게시글 상세 정보 조회 -------------------- */
+export const getPostDetail = asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+
+    const post = await prisma.posts.findUniqueOrThrow({
+        where: { id: postId },
+        select: {
+            id: true,
+            groupId: true,
+            nickname: true,
+            title: true,
+            content: true,
+            imageURL: true,
+            tags: true,
+            location: true,
+            moment: true,
+            isPublic: true,
+            likeCount: true,
+            commentCount: true,
+            createdAt: true
+        }
+    });
+
+    res.status(200).json(post);
+
+});
