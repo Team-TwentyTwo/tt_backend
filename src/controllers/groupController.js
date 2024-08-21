@@ -263,6 +263,22 @@ export const createPost = asyncHandler(async (req, res) => {
       isPublic,
       groupId,
     },
+    // response 형식에 맞는 데이터만 선택
+    select: {
+      id: true,
+      groupId: true,
+      nickname: true,
+      title: true,
+      content: true,
+      imageURL: true,
+      tags: true,
+      location: true,
+      moment: true,
+      isPublic: true,
+      likeCount: true,
+      commentCount: true,
+      createdAt: true,
+    },
   });
 
   // 그룹의 postCount 증가
