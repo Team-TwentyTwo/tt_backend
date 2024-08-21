@@ -29,6 +29,13 @@ export const createGroup = asyncHandler(async (req, res) => {
     },
   })
 
+  // newGroup 객체에서 password와 badgesCount 속성을 제거.
+  // 데이터베이스에는 password와 badgesCount 값이 이미 저장된 상태입니다.
+  delete newGroup.password;
+  delete newGroup.badgesCount;
+
+
+
   res.status(201).json(newGroup);
 });
 
@@ -112,7 +119,7 @@ export const editGroup = asyncHandler(async (req, res) => {
   const { password, ...updateData } = req.body;
 
   const group = await prisma.groups.findUniqueOrThrow({
-    where: { groupId },
+    where: { id: groupId },
   })
 
   if (group.password !== password) {
@@ -124,6 +131,9 @@ export const editGroup = asyncHandler(async (req, res) => {
     where: { id: groupId },
     data: updateData
   });
+
+  delete newGroup.badgesCount;
+  delete newGroup.password;
 
   res.status(200).json(newGroup);
 });
@@ -141,9 +151,9 @@ export const deleteGroup = asyncHandler(async (req, res) => {
     throw { name: 'ForbiddenError' };
   }
 
-  //게시글 삭제
+  // 그룹 삭제
   await prisma.groups.delete({
-    where: { groupId },
+    where: { id: groupId },
   })
 
   res.status(200).json({ message: '그룹 삭제 성공' });
@@ -161,7 +171,7 @@ export const getGroupDetail = asyncHandler(async (req, res) => {
       imageURL: true,
       isPublic: true,
       likeCount: true,
-      bages: true,
+      badges: true,
       postCount: true,
       createdAt: true,
       introduction: true
