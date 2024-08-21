@@ -247,14 +247,11 @@ export const createPost = asyncHandler(async (req, res) => {
   } = req.body;
 
   // 그룹 존재 여부 확인
-  // 해당 id를 가진 그룹이 존재하지 않을 경우 error throw
   const group = await prisma.groups.findUniqueOrThrow({
     where: { id: groupId },
   });
 
   // 그룹 비밀번호 확인
-  // 비밀번호가 일치하지 않는 경우에 대한 에러를 errorHandler에서 err.name으로 체크함. 
-  // 만약 비밀번호가 일치하지 않을 때 에러를 발생시키고 싶다!! 하면 throw { name: 'ForbiddenError' }; 으로 ForbiddenError라는 이름의 에러를 발생시키면 errorHandler에서 알아서 처리함!
   if (group.password !== groupPassword) {
     throw { name: 'ForbiddenError' };
   }
@@ -292,10 +289,25 @@ export const createPost = asyncHandler(async (req, res) => {
   });
 
   // 그룹의 postCount 증가
-  await prisma.groups.update({
+  const updatedGroup = await prisma.groups.update({
     where: { id: groupId },
     data: { postCount: { increment: 1 } },
   });
+
+  // 그룹 추억 수 20개 이상인지 확인
+  if (updatedGroup.postCount >= 20 && !updatedGroup.badges.includes("추억 수 20개 이상 등록")) {
+    await prisma.groups.update({
+      where: { id: groupId },
+      data: {
+        // badges에 badge string 추가
+        badges: {
+          push: "추억 수 20개 이상 등록",
+        },
+        // badgesCount 1 증가
+        badgesCount: { increment: 1},
+      },
+    });
+  }
 
   res.status(201).json(newPost);
 });
