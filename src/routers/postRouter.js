@@ -1,5 +1,5 @@
 import express from 'express';
-import { editPost, deletePost, getPostDetail, verifyPostAccess, likePost, isPostPublic } from '../controllers/postController.js';
+import { editPost, deletePost, getPostDetail, verifyPostAccess, likePost, isPostPublic, createPost} from '../controllers/postController.js';
 
 
 const router = express.Router();
@@ -11,5 +11,5 @@ router.post('/:postId/verify-password', verifyPostAccess); // 게시글 조회 �
 router.post('/:postId/like', likePost); // 게시글 공감하기
 router.post('/:postId/is-public', isPostPublic); // 게시글 공개 여부 확인
 
-
+router.post('/:postId/comments', createPost); // 게시글 작성
 export default router;

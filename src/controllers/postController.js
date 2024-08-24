@@ -135,3 +135,38 @@ export const isPostPublic = asyncHandler(async (req, res) => {
 
     res.status(200).json(post);
 })
+
+/* -------------------- 댓글 등록 -------------------- */
+export const createPost = asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+    const { nickname, content, password } = req.body;
+
+    await prisma.posts.findUniqueOrThrow({
+        where: { id: postId },
+    });
+
+    // 댓글 생성
+    const newComment = await prisma.comments.create({
+        data: {
+            nickname,
+            content,
+            password,
+            postId,  // 댓글을 해당 게시글에 연결
+        },
+        select: {
+            id: true,
+            nickname: true,
+            content: true,
+            createdAt: true,
+        },
+    });
+
+    // 게시글의 commentCount 증가
+    await prisma.posts.update({
+        where: { id: postId },
+        data: { commentCount: { increment: 1 } }
+    });
+
+    res.status(201).json(newComment);
+
+})
