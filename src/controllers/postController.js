@@ -1,6 +1,6 @@
 import prisma from "../../prisma/client.js";
 import { asyncHandler } from '../middlewares/asyncHandler.js';
-import { assert } from 'superstruct';
+import { assert, tuple } from 'superstruct';
 import { PatchPost } from "../structs.js";
 
 /* -------------------- 게시글 수정 -------------------- */
@@ -25,7 +25,23 @@ export const editPost = asyncHandler(async (req, res) => {
     // 바뀐 데이터만 업데이트
     const newPost = await prisma.posts.update({
         where: { id: postId },
-        data: updateData
+        data: updateData,
+        select: {
+            id: true,
+            groupId: true,
+            nickname: true,
+            title: true,
+            content: true,
+            content: true,
+            imageURL: true,
+            tags: true,
+            location: true,
+            moment: true,
+            isPublic: true,
+            likeCount: true,
+            commentCount: true,
+            createdAt: true
+        }
     });
 
     res.status(200).json(newPost);
