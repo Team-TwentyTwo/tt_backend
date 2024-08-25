@@ -136,6 +136,7 @@ export const isPostPublic = asyncHandler(async (req, res) => {
     res.status(200).json(post);
 })
 
+
 /* -------------------- 댓글 등록 -------------------- */
 export const createPost = asyncHandler(async (req, res) => {
     const { postId } = req.params;
@@ -169,4 +170,50 @@ export const createPost = asyncHandler(async (req, res) => {
 
     res.status(201).json(newComment);
 
+})
+
+
+/* -------------------- 댓글 목록 조회 -------------------- */
+export const getCommentList = asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+
+    const {
+        page = 1,
+        pageSize = 10
+    } = req.query;
+
+    const post = await prisma.posts.findUniqueOrThrow({
+        where: { id: postId },
+    });
+
+    const pageNum = parseInt(page);
+    const pageSizeNum = parseInt(pageSize);
+    
+    const totalItemCount = await prisma.comments.count({
+        where: { postId },
+    });
+
+    const comments = await prisma.comments.findMany({
+        where: { postId },
+        skip: (pageNum - 1) * pageSizeNum,
+        take: pageSizeNum,
+        orderBy: {
+            createdAt: 'desc',
+        },
+        select: {
+            id:  true,
+            nickname: true,
+            content: true,
+            createdAt: true,
+        },
+    });
+
+    const totalPages = Math.ceil(totalItemCount / pageSizeNum);
+
+    res.status(200).json({
+        currentPage: pageNum,
+        totalPages,
+        totalItemCount,
+        data: comments,
+    });
 })
