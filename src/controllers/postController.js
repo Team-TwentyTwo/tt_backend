@@ -25,7 +25,22 @@ export const editPost = asyncHandler(async (req, res) => {
     // 바뀐 데이터만 업데이트
     const newPost = await prisma.posts.update({
         where: { id: postId },
-        data: updateData
+        data: updateData,
+        select: {
+            id: true,
+            groupId: true,
+            nickname: true,
+            title: true,
+            content: true,
+            imageURL: true,
+            tags: true,
+            location: true,
+            moment: true,
+            isPublic: true,
+            likeCount: true,
+            commentCount: true,
+            createdAt: true
+        }
     });
 
     res.status(200).json(newPost);
