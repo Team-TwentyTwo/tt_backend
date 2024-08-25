@@ -112,10 +112,31 @@ export const likePost = asyncHandler(async (req, res) => {
     const { postId } = req.params; 
 
     // post의 likeCount 증가
-    await prisma.posts.update({
+    const updatedPost = await prisma.posts.update({
         where: { id: postId },
         data: { likeCount: { increment: 1 } },
+        select: {
+            likeCount: true,
+            groupId: true,
+            group: {
+                select: {
+                    badges: true,
+                },
+            },
+        },
     });
+
+    if (updatedPost.likeCount >= 10000 && !updatedPost.group.badges.includes("추억 공감 1만 개 이상 받기")) {
+        await prisma.groups.update({
+            where: { id: updatedPost.groupId },
+            data: {
+                badges: {
+                    push: "추억 공감 1만 개 이상 받기",
+                },
+                badgesCount: { increment: 1 },
+            },
+        });
+    }
 
     res.status(200).json({ message: '게시글 공감하기 성공' });
 })
