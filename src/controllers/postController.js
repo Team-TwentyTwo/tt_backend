@@ -1,7 +1,7 @@
 import prisma from "../../prisma/client.js";
 import { asyncHandler } from '../middlewares/asyncHandler.js';
 import { assert } from 'superstruct';
-import { PatchPost } from "../structs.js";
+import { PatchPost, CreatedComment } from "../structs.js";
 
 /* -------------------- 게시글 수정 -------------------- */
 export const editPost = asyncHandler(async (req, res) => {
@@ -141,6 +141,8 @@ export const isPostPublic = asyncHandler(async (req, res) => {
 export const createPost = asyncHandler(async (req, res) => {
     const { postId } = req.params;
     const { nickname, content, password } = req.body;
+
+    assert(req.body, CreatedComment);
 
     await prisma.posts.findUniqueOrThrow({
         where: { id: postId },
