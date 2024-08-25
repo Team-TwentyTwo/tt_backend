@@ -324,36 +324,40 @@ export const createPost = asyncHandler(async (req, res) => {
       }
     },
     orderBy: {
-      createdAt: 'asc' // 오래된 순으로 정렬렬
+      createdAt: 'asc' // 오래된 순으로 정렬
     }
   });
 
   // 7일 연속 게시글 등록 여부 확인
   let isConsecutive = true;
-  for (let i = 0; i < recentPosts.length - 1; i++) {
-      const currentPostDate = recentPosts[i].createdAt.toISOString().split('T')[0]; // "YYYY-MM-DD"
-      const nextPostDate = recentPosts[i + 1].createdAt.toISOString().split('T')[0]; // "YYYY-MM-DD"
+  const uniqueDates = new Set(recentPosts.map(post => post.createdAt.toISOString().split('T')[0])); // "YYYY-MM-DD" 형식으로 날짜만 추출하여 Set에 추가
 
-      const currentDate = new Date(currentPostDate);
-      const nextDate = new Date(nextPostDate);
-
+  // 날짜 비교
+  if (uniqueDates.size === 7) {
+    const sortedDates = Array.from(uniqueDates).sort();
+    for (let i = 0; i < sortedDates.length - 1; i++) {
+      const currentDate = new Date(sortedDates[i]);
+      const nextDate = new Date(sortedDates[i + 1]);
       const diffDays = (nextDate - currentDate) / (1000 * 60 * 60 * 24);
 
       if (diffDays > 1) {
-          isConsecutive = false;
-          break;
+        isConsecutive = false;
+        break;
       }
+    }
+  } else {
+    isConsecutive = false;
   }
 
   // 배지 추가
-  if (recentPosts.length >= 7 && isConsecutive && !group.badges.includes('7일 연속 추억 등록')) {
+  if (isConsecutive && !group.badges.includes('7일 연속 추억 등록')) {
     await prisma.groups.update({
       where: { id: groupId },
       data: {
         badges: {
           push: '7일 연속 추억 등록'
         },
-        badgesCount: { increment: 1},
+        badgesCount: { increment: 1 },
       }
     });
   }
