@@ -309,6 +309,55 @@ export const createPost = asyncHandler(async (req, res) => {
     });
   }
 
+  // 7일 연속 추억 등록 확인
+  const today = new Date();
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 6);
+
+  // 최근 7일간의 모든 게시물 가져오기
+  const recentPosts = await prisma.posts.findMany({
+    where: {
+      groupId: groupId,
+      createdAt: {
+        gte: sevenDaysAgo,
+        lte: today
+      }
+    },
+    orderBy: {
+      createdAt: 'asc' // 오래된 순으로 정렬렬
+    }
+  });
+
+  // 7일 연속 게시글 등록 여부 확인
+  let isConsecutive = true;
+  for (let i = 0; i < recentPosts.length - 1; i++) {
+      const currentPostDate = recentPosts[i].createdAt.toISOString().split('T')[0]; // "YYYY-MM-DD"
+      const nextPostDate = recentPosts[i + 1].createdAt.toISOString().split('T')[0]; // "YYYY-MM-DD"
+
+      const currentDate = new Date(currentPostDate);
+      const nextDate = new Date(nextPostDate);
+
+      const diffDays = (nextDate - currentDate) / (1000 * 60 * 60 * 24);
+
+      if (diffDays > 1) {
+          isConsecutive = false;
+          break;
+      }
+  }
+
+  // 배지 추가
+  if (recentPosts.length >= 7 && isConsecutive && !group.badges.includes('7일 연속 추억 등록')) {
+    await prisma.groups.update({
+      where: { id: groupId },
+      data: {
+        badges: {
+          push: '7일 연속 추억 등록'
+        },
+        badgesCount: { increment: 1},
+      }
+    });
+  }
+
   res.status(201).json(newPost);
 });
 
