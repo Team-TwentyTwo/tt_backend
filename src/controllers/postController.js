@@ -1,7 +1,7 @@
 import prisma from "../../prisma/client.js";
 import { asyncHandler } from '../middlewares/asyncHandler.js';
 import { assert } from 'superstruct';
-import { PatchPost } from "../structs.js";
+import { PatchPost, CreatedComment } from "../structs.js";
 
 /* -------------------- 게시글 수정 -------------------- */
 export const editPost = asyncHandler(async (req, res) => {
@@ -155,4 +155,88 @@ export const isPostPublic = asyncHandler(async (req, res) => {
     });
 
     res.status(200).json(post);
+})
+
+
+/* -------------------- 댓글 등록 -------------------- */
+export const createComment = asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+    const { nickname, content, password } = req.body;
+
+    assert(req.body, CreatedComment);
+
+    await prisma.posts.findUniqueOrThrow({
+        where: { id: postId },
+    });
+
+    // 댓글 생성
+    const newComment = await prisma.comments.create({
+        data: {
+            nickname,
+            content,
+            password,
+            postId,  // 댓글을 해당 게시글에 연결
+        },
+        select: {
+            id: true,
+            nickname: true,
+            content: true,
+            createdAt: true,
+        },
+    });
+
+    // 게시글의 commentCount 증가
+    await prisma.posts.update({
+        where: { id: postId },
+        data: { commentCount: { increment: 1 } }
+    });
+
+    res.status(201).json(newComment);
+
+})
+
+
+/* -------------------- 댓글 목록 조회 -------------------- */
+export const getCommentList = asyncHandler(async (req, res) => {
+    const { postId } = req.params;
+
+    const {
+        page = 1,
+        pageSize = 10
+    } = req.query;
+
+    const post = await prisma.posts.findUniqueOrThrow({
+        where: { id: postId },
+    });
+
+    const pageNum = parseInt(page);
+    const pageSizeNum = parseInt(pageSize);
+    
+    const totalItemCount = await prisma.comments.count({
+        where: { postId },
+    });
+
+    const comments = await prisma.comments.findMany({
+        where: { postId },
+        skip: (pageNum - 1) * pageSizeNum,
+        take: pageSizeNum,
+        orderBy: {
+            createdAt: 'desc',
+        },
+        select: {
+            id:  true,
+            nickname: true,
+            content: true,
+            createdAt: true,
+        },
+    });
+
+    const totalPages = Math.ceil(totalItemCount / pageSizeNum);
+
+    res.status(200).json({
+        currentPage: pageNum,
+        totalPages,
+        totalItemCount,
+        data: comments,
+    });
 })
