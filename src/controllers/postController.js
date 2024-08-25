@@ -32,7 +32,6 @@ export const editPost = asyncHandler(async (req, res) => {
             nickname: true,
             title: true,
             content: true,
-            content: true,
             imageURL: true,
             tags: true,
             location: true,
