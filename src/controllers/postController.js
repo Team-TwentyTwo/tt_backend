@@ -138,7 +138,7 @@ export const isPostPublic = asyncHandler(async (req, res) => {
 
 
 /* -------------------- 댓글 등록 -------------------- */
-export const createPost = asyncHandler(async (req, res) => {
+export const createComment = asyncHandler(async (req, res) => {
     const { postId } = req.params;
     const { nickname, content, password } = req.body;
 
