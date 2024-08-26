@@ -1,5 +1,6 @@
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 
 // 이 미들웨어는 'multipart/form-data' 형식으로 제출된 파일을 처리하는 데 사용된다.
 // Multer 설정
