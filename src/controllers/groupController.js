@@ -29,6 +29,13 @@ export const createGroup = asyncHandler(async (req, res) => {
     },
   })
 
+  // newGroup 객체에서 password와 badgesCount 속성을 제거.
+  // 데이터베이스에는 password와 badgesCount 값이 이미 저장된 상태입니다.
+  delete newGroup.password;
+  delete newGroup.badgesCount;
+
+
+
   res.status(201).json(newGroup);
 });
 
@@ -112,7 +119,7 @@ export const editGroup = asyncHandler(async (req, res) => {
   const { password, ...updateData } = req.body;
 
   const group = await prisma.groups.findUniqueOrThrow({
-    where: { groupId },
+    where: { id: groupId },
   })
 
   if (group.password !== password) {
@@ -124,6 +131,9 @@ export const editGroup = asyncHandler(async (req, res) => {
     where: { id: groupId },
     data: updateData
   });
+
+  delete newGroup.badgesCount;
+  delete newGroup.password;
 
   res.status(200).json(newGroup);
 });
@@ -141,9 +151,9 @@ export const deleteGroup = asyncHandler(async (req, res) => {
     throw { name: 'ForbiddenError' };
   }
 
-  //게시글 삭제
+  // 그룹 삭제
   await prisma.groups.delete({
-    where: { groupId },
+    where: { id: groupId },
   })
 
   res.status(200).json({ message: '그룹 삭제 성공' });
@@ -161,7 +171,7 @@ export const getGroupDetail = asyncHandler(async (req, res) => {
       imageURL: true,
       isPublic: true,
       likeCount: true,
-      bages: true,
+      badges: true,
       postCount: true,
       createdAt: true,
       introduction: true
@@ -237,14 +247,11 @@ export const createPost = asyncHandler(async (req, res) => {
   } = req.body;
 
   // 그룹 존재 여부 확인
-  // 해당 id를 가진 그룹이 존재하지 않을 경우 error throw
   const group = await prisma.groups.findUniqueOrThrow({
     where: { id: groupId },
   });
 
   // 그룹 비밀번호 확인
-  // 비밀번호가 일치하지 않는 경우에 대한 에러를 errorHandler에서 err.name으로 체크함. 
-  // 만약 비밀번호가 일치하지 않을 때 에러를 발생시키고 싶다!! 하면 throw { name: 'ForbiddenError' }; 으로 ForbiddenError라는 이름의 에러를 발생시키면 errorHandler에서 알아서 처리함!
   if (group.password !== groupPassword) {
     throw { name: 'ForbiddenError' };
   }
@@ -282,10 +289,78 @@ export const createPost = asyncHandler(async (req, res) => {
   });
 
   // 그룹의 postCount 증가
-  await prisma.groups.update({
+  const updatedGroup = await prisma.groups.update({
     where: { id: groupId },
     data: { postCount: { increment: 1 } },
   });
+
+  // 그룹 추억 수 20개 이상인지 확인
+  if (updatedGroup.postCount >= 20 && !updatedGroup.badges.includes("추억 수 20개 이상 등록")) {
+    await prisma.groups.update({
+      where: { id: groupId },
+      data: {
+        // badges에 badge string 추가
+        badges: {
+          push: "추억 수 20개 이상 등록",
+        },
+        // badgesCount 1 증가
+        badgesCount: { increment: 1},
+      },
+    });
+  }
+
+  // 7일 연속 추억 등록 확인
+  const today = new Date();
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 6);
+
+  // 최근 7일간의 모든 게시물 가져오기
+  const recentPosts = await prisma.posts.findMany({
+    where: {
+      groupId: groupId,
+      createdAt: {
+        gte: sevenDaysAgo,
+        lte: today
+      }
+    },
+    orderBy: {
+      createdAt: 'asc' // 오래된 순으로 정렬
+    }
+  });
+
+  // 7일 연속 게시글 등록 여부 확인
+  let isConsecutive = true;
+  const uniqueDates = new Set(recentPosts.map(post => post.createdAt.toISOString().split('T')[0])); // "YYYY-MM-DD" 형식으로 날짜만 추출하여 Set에 추가
+
+  // 날짜 비교
+  if (uniqueDates.size === 7) {
+    const sortedDates = Array.from(uniqueDates).sort();
+    for (let i = 0; i < sortedDates.length - 1; i++) {
+      const currentDate = new Date(sortedDates[i]);
+      const nextDate = new Date(sortedDates[i + 1]);
+      const diffDays = (nextDate - currentDate) / (1000 * 60 * 60 * 24);
+
+      if (diffDays > 1) {
+        isConsecutive = false;
+        break;
+      }
+    }
+  } else {
+    isConsecutive = false;
+  }
+
+  // 배지 추가
+  if (isConsecutive && !group.badges.includes('7일 연속 추억 등록')) {
+    await prisma.groups.update({
+      where: { id: groupId },
+      data: {
+        badges: {
+          push: '7일 연속 추억 등록'
+        },
+        badgesCount: { increment: 1 },
+      }
+    });
+  }
 
   res.status(201).json(newPost);
 });

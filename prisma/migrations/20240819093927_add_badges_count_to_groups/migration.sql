@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Groups" ADD COLUMN     "badgesCount" INTEGER NOT NULL DEFAULT 0,
+ALTER COLUMN "likeCount" SET DEFAULT 0,
+ALTER COLUMN "postCount" SET DEFAULT 0;

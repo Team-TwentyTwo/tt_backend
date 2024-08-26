@@ -51,6 +51,7 @@ model Comments {
   id        String   @id @default(uuid())
   nickname  String
   content   String
+  password  String
   createdAt DateTime @default(now())
   post      Posts    @relation(fields: [postId], references: [id]) // 댓글 - 게시글 다대일 관계
   postId    String
