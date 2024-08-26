@@ -330,7 +330,7 @@ export const createPost = asyncHandler(async (req, res) => {
 
   // 7일 연속 게시글 등록 여부 확인
   let isConsecutive = true;
-  const uniqueDates = new Set(recentPosts.map(post => post.createdAt.toISOString().split('T')[0])); // "YYYY-MM-DD" 형식으로 날짜만 추출하여 Set에 추가
+  const uniqueDates = new Set(recentPosts.map(post => new Date(post.createdAt).toISOString().split('T')[0])); // "YYYY-MM-DD" 형식으로 날짜만 추출하여 Set에 추가
 
   // 날짜 비교
   if (uniqueDates.size === 7) {
