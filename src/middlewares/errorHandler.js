@@ -14,8 +14,8 @@ export const errorHandler = (err, req, res, next) => {
 
     // 리소스 오류 (업로드되지 않은 파일을 클라이언트가 요청할 때)
     // 일반 Error 객체의 메시지를 기반으로 오류 처리
-  } else if (err.message === 'No File Uploaded') {
-    res.status(404).json({ message: '존재하지 않는 데이터입니다.' });
+  } else if (err.message === 'NoFileUploadedError') {
+    res.status(404).json({ message: '파일이 업로드되지 않았습니다.' });
 
     // 권한 오류 (비밀번호가 일치하지 않을 때)
   } else if (err.name === 'ForbiddenError') {
