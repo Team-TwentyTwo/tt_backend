@@ -5,7 +5,6 @@ import {
   CreatedGroup, PatchGroup,
   CreatedPost
 } from '../structs.js';
-import { createdAtChecking } from "../utils/dateUtils.js";
 
 /* -------------------- 그룹 등록 -------------------- */
 export const createGroup = asyncHandler(async (req, res) => {
@@ -65,35 +64,6 @@ export const getGroupList = asyncHandler(async (req, res) => {
     }
   }
 
-  // 그룹 생성 날짜와 현재 날짜를 비교하여 1년이 지났다면 배지를 추가
-  const groupsToUpdate = await prisma.groups.findMany({
-    where: filters,
-    select: {
-      id: true,
-      createdAt: true,
-      badges: true,
-      badgesCount: true
-    }
-  })
-
-  // 반목문을 통해 모든 게시글이 그룹 생성 후 1년 이상인지 확인
-  for (const group of groupsToUpdate) {
-    // 그룹 생성 후 1년 이상인지 확인
-    if (createdAtChecking(group.createdAt) && !group.badges.includes("그룹 생성 후 1년 달성")) {
-      await prisma.groups.update({
-        where: { id: group.id },
-        data: {
-          // badges에 badge string 추가
-          badges: {
-            push: "그룹 생성 후 1년 달성"
-          },
-          // badgesCount 1 증가
-          badgesCount: { increment: 1 },
-        }
-      });
-    }
-  }
-
   let orderBy;
   switch (sortBy) {
     case 'mostPosted':
@@ -104,7 +74,6 @@ export const getGroupList = asyncHandler(async (req, res) => {
       break;
     case 'mostBadge':
       // 기존 스키마에 bagesCount는 없고 bages만 있었음. 해당 코드를 위해 bagesCount를 추가하게 됨.
-      // 그룹 생성 후 1년 이상 달성한 게시글이 있다면 badges와 badgesCount를 업데이트하고, orderBy를 badgesCount 기준으로 설정하게 됨
       orderBy = { badgesCount: 'desc' };
       break;
     case 'latest':
@@ -211,23 +180,9 @@ export const getGroupDetail = asyncHandler(async (req, res) => {
       postCount: true,
       createdAt: true,
       introduction: true
+
     }
   })
-
-  // 그룹 생성 후 1년 이상인지 확인
-  if (createdAtChecking(group.createdAt) && !group.badges.includes("그룹 생성 후 1년 달성")) {
-    await prisma.groups.update({
-      where: { id: groupId },
-      data: {
-        // badges에 badge string 추가
-        badges: {
-          push: "그룹 생성 후 1년 달성",
-        },
-        // badgesCount 1 증가
-        badgesCount: { increment: 1 },
-      },
-    })
-  }
 
   res.status(200).json(group);
 });
@@ -252,28 +207,10 @@ export const verifyGroupAccess = asyncHandler(async (req, res) => {
 export const likeGroup = asyncHandler(async (req, res) => {
   const { groupId } = req.params;
 
-  // 그룹의 likeCount 증가
-  const updatedGroup = await prisma.groups.update({
+  await prisma.groups.update({
     where: { id: groupId },
     data: { likeCount: { increment: 1 } },
   });
-
-  // 그룹 공감 수 1만 개 이상인지 확인
-  if (updatedGroup.likeCount >= 10000 && !updatedGroup.badges.includes("그룹 공감 1만 개 이상 받기")) {
-    await prisma.groups.update({
-      where: { id: groupId },
-      data: {
-        // badges에 badge string 추가
-        badges: {
-          push: "그룹 공감 1만 개 이상 받기",
-        },
-        // badgesCount 1 증가
-        badgesCount: { increment: 1 },
-      }
-    })
-  }
-
-
 
   res.status(200).json({ message: '그룹 공감하기 성공' });
 });
@@ -372,7 +309,7 @@ export const createPost = asyncHandler(async (req, res) => {
           push: "추억 수 20개 이상 등록",
         },
         // badgesCount 1 증가
-        badgesCount: { increment: 1 },
+        badgesCount: { increment: 1},
       },
     });
   }
@@ -398,7 +335,7 @@ export const createPost = asyncHandler(async (req, res) => {
 
   // 7일 연속 게시글 등록 여부 확인
   let isConsecutive = true;
-  const uniqueDates = new Set(recentPosts.map(post => post.createdAt.toISOString().split('T')[0])); // "YYYY-MM-DD" 형식으로 날짜만 추출하여 Set에 추가
+  const uniqueDates = new Set(recentPosts.map(post => new Date(post.createdAt).toISOString().split('T')[0])); // "YYYY-MM-DD" 형식으로 날짜만 추출하여 Set에 추가
 
   // 날짜 비교
   if (uniqueDates.size === 7) {
