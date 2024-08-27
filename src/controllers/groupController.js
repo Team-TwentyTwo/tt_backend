@@ -57,7 +57,12 @@ export const getGroupList = asyncHandler(async (req, res) => {
   const isPublicBool = isPublic === 'true' ? true : false;
 
   let filters = {
-    isPublic: isPublicBool
+    isPublic: isPublicBool,
+    name: {
+      contains: keyword,
+      // 대소문자 구분 없이 검색
+      mode: 'insensitive',
+    }
   }
 
   // 그룹 생성 날짜와 현재 날짜를 비교하여 1년이 지났다면 배지를 추가
