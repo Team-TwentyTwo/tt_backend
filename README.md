@@ -1,7 +1,7 @@
 # 조각집
 기억 저장 및 공유 서비스<br/> <br/>
-<img src="https://github.com/user-attachments/assets/51e79810-5dc0-49d3-be78-a3c2f01d3b6e" height="500">
-<img src="https://github.com/user-attachments/assets/76a0611b-9496-4a32-9fb8-e80de4fb43ca" height="500">
+<img src="https://github.com/user-attachments/assets/51e79810-5dc0-49d3-be78-a3c2f01d3b6e" height="400">
+<img src="https://github.com/user-attachments/assets/76a0611b-9496-4a32-9fb8-e80de4fb43ca" height="400">
 
 ## 🔧 주요 기능
 - **그룹** : 그룹 생성, 그룹 수정, 그룹 삭제, 그룹 목록 조회, 그룹 상세 정보 조회, 그룹 공감하기
@@ -12,14 +12,16 @@
 ## 📆개발 기간
 2024.08.09 ~ 2024.09.06
 ## 💻기술 스택
-<img src="https://img.shields.io/badge/node.js-339933?style=for-the-badge&logo=Node.js&logoColor=white">
-<img src="https://img.shields.io/badge/express-000000?style=for-the-badge&logo=express&logoColor=white">
-<img src="https://img.shields.io/badge/postgresql-4169E1?style=for-the-badge&logo=postgresql&logoColor=white">
-<img src="https://img.shields.io/badge/render-000000?style=for-the-badge&logo=render&logoColor=white">
-<img src="https://img.shields.io/badge/amazon s3-569A31?style=for-the-badge&logo=amazons3&logoColor=white">
+<p>
+    <img src="https://img.shields.io/badge/node.js-339933?style=for-the-badge&logo=Node.js&logoColor=white">
+    <img src="https://img.shields.io/badge/express-000000?style=for-the-badge&logo=express&logoColor=white">
+    <img src="https://img.shields.io/badge/postgresql-4169E1?style=for-the-badge&logo=postgresql&logoColor=white">
+    <img src="https://img.shields.io/badge/render-000000?style=for-the-badge&logo=render&logoColor=white">
+    <img src="https://img.shields.io/badge/amazon s3-569A31?style=for-the-badge&logo=amazons3&logoColor=white">
 <br/>
-<img src="https://img.shields.io/badge/git-F05032?style=for-the-badge&logo=git&logoColor=white">
-<img src="https://img.shields.io/badge/github-181717?style=for-the-badge&logo=github&logoColor=white">
+    <img src="https://img.shields.io/badge/git-F05032?style=for-the-badge&logo=git&logoColor=white">
+    <img src="https://img.shields.io/badge/github-181717?style=for-the-badge&logo=github&logoColor=white">
+</p>
 
 ## 📁폴더 구조
 
