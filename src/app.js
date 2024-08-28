@@ -1,6 +1,7 @@
 import * as dotenv from 'dotenv';
 dotenv.config();
 import express from 'express';
+import cors from 'cors';
 import groupRouter from './routers/groupRouter.js'
 import postRouter from './routers/postRouter.js'
 import commentRouter from './routers/commentRouter.js'
@@ -8,6 +9,7 @@ import imageRouter from './routers/imageRouter.js'
 import { errorHandler } from './middlewares/errorHandler.js';
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 app.use('/api/groups', groupRouter);
