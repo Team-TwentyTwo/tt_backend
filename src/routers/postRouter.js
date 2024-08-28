@@ -9,7 +9,7 @@ router.delete('/:postId', deletePost); // 게시글 삭제
 router.get('/:postId', getPostDetail); // 게시글 상세 정보 조회
 router.post('/:postId/verify-password', verifyPostAccess); // 게시글 조회 권한 확인
 router.post('/:postId/like', likePost); // 게시글 공감하기
-router.post('/:postId/is-public', isPostPublic); // 게시글 공개 여부 확인
+router.get('/:postId/is-public', isPostPublic); // 게시글 공개 여부 확인
 
 router.post('/:postId/comments', createComment); // 댓글 작성
 router.get('/:postId/comments', getCommentList); // 댓글 목록 조회
